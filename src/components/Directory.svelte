@@ -1,86 +1,204 @@
 <script>
-export let directory;
-export let onAdd;
-export let onSelect;
-export let onDelete;
+    export let directory;
+    //export let onAdd;
+    export let onSelect;
+    export let onDelete;
 
-let showInfo = false;
-let totalSubDirectories = 0;
-let totalFiles = 0;
+    let showInfo = false;
+    let isSelected = false;
+    let totalSubDirectories = 0;
+    let totalFiles = 0;
 
-import {
-    onMount
-} from 'svelte';
-
-onMount(() => {
     function calculateTotals(dir) {
-        if (Array.isArray(dir.children)) {
-            totalSubDirectories += dir.children.filter(c => c.type === 'directory').length;
-            totalFiles += dir.children.filter(c => c.type === 'file').length;
+        totalSubDirectories = 0;
+        totalFiles = 0;
 
-            dir.children.forEach(child => {
-                if (child.type === 'directory') {
-                    calculateTotals(child);
-                }
-            });
+        function countItems(directory) {
+            if (Array.isArray(directory.children)) {
+                totalSubDirectories += directory.children.filter(
+                    (c) => c.type === "directory",
+                ).length;
+                totalFiles += directory.children.filter(
+                    (c) => c.type === "file",
+                ).length;
+
+                directory.children.forEach((child) => {
+                    if (child.type === "directory") {
+                        countItems(child);
+                    }
+                });
+            }
+        }
+
+        countItems(dir);
+    }
+
+    $: calculateTotals(directory);
+
+    function handleClick() {
+        if (directory.type === "file") {
+            alert("Files do not have subdirectories to create.");
+            return;
+        }
+        onSelect(directory);
+        isSelected = !isSelected;
+    }
+
+    function handleDelete() {
+        if (onDelete) {
+            onDelete(directory);
         }
     }
 
-    calculateTotals(directory);
-});
-
-function handleAdd() {
-    onAdd(directory);
-}
-
-function handleClick() {
-    onSelect(directory);
-}
-
-function handleDelete() {
-    if (onDelete) {
-        onDelete(directory);
+    function toggleInfo() {
+        showInfo = !showInfo;
     }
-}
-
-function toggleInfo() {
-    showInfo = !showInfo;
-}
 </script>
 
-<div class="directory p-6 rounded-lg border border-gray-200 bg-white shadow-sm">
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div class="directory-header flex justify-between items-center mb-4">
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <span class="directory-name text-lg font-semibold cursor-pointer text-gray-900 space-x-6" on:click={handleClick}>
-            {directory.name}
-        </span>
-        <div class="icon-group p-3 flex items-center space-x-6">
-            <!-- svelte-ignore a11y-mouse-events-have-key-events -->
-            <button on:mouseover={toggleInfo} on:mouseout={toggleInfo}>
-                <i class="fas fa-info-circle"></i>
-                {#if showInfo}
-                <div>
-                    <p><strong>Name:</strong> {directory.name}</p>
-                    <p><strong>Immediate Sub-Directories:</strong> {Array.isArray(directory.children) ? directory.children.filter(c => c.type === 'directory').length : 0}</p>
-                    <p><strong>Immediate Files:</strong> {Array.isArray(directory.children) ? directory.children.filter(c => c.type === 'file').length : 0}</p>
-                    <p><strong>Total Sub-Directories:</strong> {totalSubDirectories}</p>
-                    <p><strong>Total Files:</strong> {totalFiles}</p>
-                </div>
-                {/if}
-            </button>
-            <button class="delete-icon p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200" on:click={handleDelete}>
-                <i class="fas fa-trash-alt"></i>
-            </button>
-        </div>
-    </div>
+<div>
+    <div class={`directory p-6 rounded-lg border ${isSelected ? 'highlighted' : 'border-gray-200'} bg-white shadow-sm`}>
 
-    <div class="directory-details text-sm text-gray-600 mt-2">
-        <span class="flex items-center mb-2">
-            <i class="fas fa-folder mr-1"></i> {Array.isArray(directory.children) ? directory.children.filter(c => c.type === 'directory').length : 0}
-            <span class="ml-4 flex items-center">
-                <i class="fas fa-file mr-1"></i> {Array.isArray(directory.children) ? directory.children.filter(c => c.type === 'file').length : 0}
-            </span>
-        </span>
+        <div class="directory-header flex justify-between items-center mb-4">
+            {#if directory.type === "directory"}
+                <!-- svelte-ignore a11y-no-static-element-interactions -->
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <span
+                    class="directory-name text-lg font-semibold cursor-pointer text-gray-900 space-x-6"
+                    on:click={handleClick}
+                >
+                    {directory.name}
+                </span>
+            {/if}
+            {#if directory.type === "file"}
+                <i class="fas fa-image text-gray-400"></i>
+                <span class="text-lg font-semibold text-gray-900"
+                    >{directory.name}</span
+                >
+            {/if}
+            <div class="icon-group p-3 flex items-center space-x-6">
+                <button
+                    class="delete-icon p-2 text-600 rounded-full"
+                    on:click={handleDelete}
+                >
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+                <!-- svelte-ignore a11y-mouse-events-have-key-events -->
+                <button
+                    class="info-icon"
+                    on:mouseover={toggleInfo}
+                    on:mouseout={toggleInfo}
+                >
+                    <i class="fas fa-info"></i>
+                </button>
+            </div>
+        </div>
+
+        {#if directory.type === "directory"}
+            <div class="directory-details text-sm text-gray-600 mt-2">
+                <span class="flex items-center mb-2">
+                    <i class="fas fa-folder mr-1"></i>
+                    {Array.isArray(directory.children)
+                        ? directory.children.filter(
+                              (c) => c.type === "directory",
+                          ).length
+                        : 0}
+                    <span class="ml-4 flex items-center">
+                        <i class="fas fa-file mr-1"></i>
+                        {Array.isArray(directory.children)
+                            ? directory.children.filter(
+                                  (c) => c.type === "file",
+                              ).length
+                            : 0}
+                    </span>
+                </span>
+            </div>
+        {/if}
     </div>
+    {#if showInfo}
+        <div class="info-popup">
+            <p><strong>Name:</strong> {directory.name}</p>
+            <p>
+                <strong>Immediate Sub-Directories:</strong>
+                {Array.isArray(directory.children)
+                    ? directory.children.filter((c) => c.type === "directory")
+                          .length
+                    : 0}
+            </p>
+            <p>
+                <strong>Immediate Files:</strong>
+                {Array.isArray(directory.children)
+                    ? directory.children.filter((c) => c.type === "file").length
+                    : 0}
+            </p>
+            <p><strong>Total Sub-Directories:</strong> {totalSubDirectories}</p>
+            <p><strong>Total Files:</strong> {totalFiles}</p>
+        </div>
+    {/if}
 </div>
+
+<style>
+    .directory {
+        position: relative;
+        transition:
+            border-color 0.3s ease,
+            background-color 0.3s ease;
+    }
+
+    .highlighted {
+        background-color: #f0f3ff;
+        border-color: #bccbf0; 
+        animation: fillAnimation 0.5s forwards;
+    }
+
+    @keyframes fillAnimation {
+        0% {
+            background-color: transparent;
+        }
+        100% {
+            background-color: #f0f3ff;
+        }
+    }
+
+    @keyframes popupAnimation {
+        0% {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .directory:hover .delete-icon {
+        display: block;
+    }
+
+    .delete-icon {
+        display: none;
+    }
+
+    .info-icon {
+        cursor: pointer;
+    }
+
+    .file-display {
+        padding: 1rem;
+        background-color: #f9f9f9;
+        border: 1px solid #e0e0e0;
+        border-radius: 0.375rem;
+    }
+    .info-popup {
+        position: relative;
+        padding: 8px 19px;
+        gap: 8px;
+        background: #ffffff;
+        border: 1px solid rgba(50, 50, 50, 0.1);
+        border-radius: 0px 10px 10px 10px;
+        box-sizing: border-box;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-radius: 0.375rem;
+        transform: translateY(-10px);
+        animation: popupAnimation 0.3s ease-in-out;
+    }
+</style>
