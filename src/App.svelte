@@ -22,7 +22,7 @@
         };
 
         selectedDirectory.children.push(newItem);
-        root = { ...root }; // Trigger reactivity
+        root = { ...root }; 
         updatePanels(selectedDirectory);
         closeModal();
     }
@@ -40,9 +40,8 @@
         const index = panels.findIndex((panel) => panel === directory);
 
         if (index === -1) {
-            // If directory is not found in the panels, add it and remove unnecessary panels
             const parentIndex = panels.findIndex((panel) =>
-                panel.children.includes(directory),
+                panel.children.includes(directory)
             );
 
             if (parentIndex !== -1) {
@@ -51,7 +50,6 @@
 
             panels.push(directory);
         } else {
-            // If directory is found, slice the panels array to keep ancestors and the current panel
             panels = panels.slice(0, index + 1);
         }
     }
@@ -68,12 +66,11 @@
         }
 
         if (directory === root) {
-            // Special case for root deletion
             root = { name: "ROOT", type: "directory", children: [] };
             panels = [root];
         } else {
             const parentDirectory = panels.find((panel) =>
-                panel.children.includes(directory),
+                panel.children.includes(directory)
             );
 
             if (parentDirectory) {
@@ -92,24 +89,18 @@
 
 <main class="min-h-screen w-full flex overflow-x-auto bg-gray-50">
     {#each panels as panel, index}
-        <div
-            class="relative w-80 bg-white border border-gray-200 rounded-lg shadow-lg mr-4 mb-4"
-        >
-            <div
-                class="p-4 flex justify-between items-center bg-gray-50 border-b border-gray-200"
-            >
+        <div class="relative w-80 bg-white border border-gray-200 rounded-lg shadow-lg mr-4 mb-4">
+            <div class="p-4 flex justify-between items-center bg-gray-50 border-b border-gray-200">
                 <span class="font-semibold text-gray-900">{panel.name}</span>
-                <button
-                    class="bg-black text-white px-3 py-1 rounded-md hover:bg-slate-200"
-                    on:click={() => openModal(panel)}
-                >
+                <button class="bg-black text-white px-3 py-1 rounded-md hover:bg-slate-200" on:click={() => openModal(panel)}>
                     <i class="fas fa-plus"></i>
                 </button>
             </div>
             <div class="p-10 overflow-y-auto w-full max-h-screen">
                 {#each panel.children as directory}
                     <Directory
-                        directory={directory || { name: "", children: [] }}
+                        directory={directory}
+                        selectedDirectory={selectedDirectory}
                         onAdd={openModal}
                         onSelect={handleDirectoryClick}
                         onDelete={deleteItem}
